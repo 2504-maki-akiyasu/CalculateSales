@@ -80,10 +80,10 @@ public class CalculateSales {
 
 				branchSales.put(sales.get(0), saleAmount);
 
-			}catch (IOException e) {
+			} catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
 				return;
-			}finally{
+			} finally {
 				// ファイルを開いている場合
 				if(br != null) {
 					try {
@@ -132,8 +132,8 @@ public class CalculateSales {
 				String[] items = line.split(",");
 
 				//items[0]:支店コード　items[1]:支店名　0L:Long型の売上金額の初期値0
-				branchNames.put(items[0],items[1]);
-				branchSales.put(items[0],0L);
+				branchNames.put(items[0], items[1]);
+				branchSales.put(items[0], 0L);
 			}
 
 		} catch(IOException e) {
@@ -169,7 +169,7 @@ public class CalculateSales {
 		BufferedWriter bw = null;
 			try {
 				//最初にファイルを作成　()内で作成するファイルのパス、名称を定義
-				File writefile = new File(path,fileName);
+				File writefile = new File(path, fileName);
 				bw = new BufferedWriter(new FileWriter(writefile));
 
 				//branchNamesに記載されているkeyの数だけファイル内に出力→改行を繰り返し
@@ -178,11 +178,11 @@ public class CalculateSales {
 					bw.newLine();
 				}
 
-			}catch(IOException e) {
+			} catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
 				return false;
 
-			}finally{
+			} finally {
 				if(bw != null) {
 					try {
 						// ファイルを閉じる

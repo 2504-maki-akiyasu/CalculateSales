@@ -76,8 +76,12 @@ public class CalculateSales {
 					list.add(line);
 				}
 
-				//Qここ時点での　リスト　って中身がどうなってるっけ
-				//Q次何をしたいんだっけ
+				//Q ここ時点での　リスト　って中身がどうなってるっけ
+				//→売上ファイルに記述されている2行がString型で入っている
+				//Q 次何をしたいんだっけ
+				//→①計算出来るようにリストの売上金額を String → Long → iong の順に型変換
+				//　②branchSalesの売上金額に売上ファイルの金額を加算
+				//　③加算結果を再度branchSalesの売上金額に戻す
 
 				long fileSale = Long.parseLong(list.get(1));
 
@@ -103,8 +107,7 @@ public class CalculateSales {
 					}
 				}
 			}
-			//branchSalesに値が正常に入ったか確認
-			System.out.println(branchSales);
+
 		}
 
 
@@ -125,7 +128,8 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 読み込み可否
 	 */
-	private static boolean readFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	private static boolean readFile
+	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		BufferedReader br = null;
 
 		try {
@@ -176,15 +180,18 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 書き込み可否
 	 */
-	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	private static boolean writeFile
+	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
-		File writefiles = new File(path,FILE_NAME_BRANCH_OUT);
+
+		//最初にファイルを作成　()内で作成するファイルのパス、名称を定義
+		File writefile = new File(path,FILE_NAME_BRANCH_OUT);
 		BufferedWriter bw = null;
 
-
 			try {
-				bw = new BufferedWriter(new FileWriter(writefiles));
+				bw = new BufferedWriter(new FileWriter(writefile));
 
+				//branchNamesに記載されているkeyの数だけファイル内に出力→改行を繰り返し
 				for(String key:branchNames.keySet()) {
 					bw.write(key + "," + branchNames.get(key) + "," + branchSales.get(key));
 					bw.newLine();
@@ -194,7 +201,7 @@ public class CalculateSales {
 				System.out.println(UNKNOWN_ERROR);
 				return false;
 
-			}finally {
+			}finally{
 				if(bw != null) {
 					try {
 						// ファイルを閉じる
@@ -206,7 +213,6 @@ public class CalculateSales {
 				}
 
 			}
-
 		return true;
 	}
 

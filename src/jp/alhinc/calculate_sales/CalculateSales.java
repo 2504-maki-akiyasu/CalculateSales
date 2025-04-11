@@ -74,8 +74,8 @@ public class CalculateSales {
 		for(int i = 0; i < rcdFiles.size() - 1 ; i++) {
 
 			//i番目(former)とその次(latter)のファイル名の先頭から8文字をint型に変換して定義
-			int former = Integer.parseInt((files[i].getName()).substring(0, 8));
-			int latter = Integer.parseInt((files[i + 1].getName()).substring(0, 8));
+			int former = Integer.parseInt((rcdFiles.get(i).getName()).substring(0, 8));
+			int latter = Integer.parseInt((rcdFiles.get(i + 1).getName()).substring(0, 8));
 
 			//売上ファイル名が連番でない場合エラー処理
 			if((latter - former) != 1) {

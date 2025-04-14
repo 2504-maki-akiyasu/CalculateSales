@@ -16,18 +16,24 @@ public class CalculateSales {
 
 	// 支店定義ファイル名
 	private static final String FILE_NAME_BRANCH_LST = "branch.lst";
+	// 商品定義ファイル名
+	private static final String FILE_NAME_COMMODITY_LST = "commodity.lst";
 
 	// 支店別集計ファイル名
 	private static final String FILE_NAME_BRANCH_OUT = "branch.out";
+	// 商品別集計ファイル名
+	private static final String FILE_NAME_COMMODITY_OUT = "commodity.out";
 
 	// エラーメッセージ
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
-	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
-	private static final String FILE_INVALID_FORMAT = "支店定義ファイルのフォーマットが不正です";
+	private static final String BRANCH_FILE_NOT_EXIST = "支店定義ファイルが存在しません";
+	private static final String PRODUCT_FILE_NOT_EXIST = "商品定義ファイルが存在しません";
+	private static final String FILE_INVALID_FORMAT = "のフォーマットが不正です";
 	private static final String FILE_NOT_SERIALNUMBER = "売上ファイル名が連番になっていません";
-	private static final String OVER_TEN_DIGIT = "合計⾦額が10桁を超えました";
-	private static final String INVALID_CODE = "の支店コードが不正です";
-	private static final String NOT_TWO_LINES = "のフォーマットが不正です";
+	private static final String OVER_TEN_DIGIT = "の合計金額が10桁を超えました";
+	private static final String INVALID_BRANCHCODE = "の支店コードが不正です";
+	private static final String INVALID_PRODUCTCODE = "の商品コードが不正です";
+	private static final String NOT_THREE_LINES = "のフォーマットが不正です";
 
 	/**
 	 * メインメソッド
@@ -45,9 +51,26 @@ public class CalculateSales {
 		Map<String, String> branchNames = new HashMap<>();
 		// 支店コードと売上金額を保持するMap
 		Map<String, Long> branchSales = new HashMap<>();
+		// 支店コードの正規表現
+		String branchCode = "^[0-9]{3}";
+
+		// 商品コードと商品名を保持するMap
+		Map<String, String> productNames = new HashMap<>();
+		// 商品コードと売上金額を保持するMap
+		Map<String, Long> productSales = new HashMap<>();
+		// 商品コードの正規表現
+		String productCode = "^[a-zA-Z0-9]{8}";
+
 
 		// 支店定義ファイル読み込み処理
-		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
+		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales,
+			BRANCH_FILE_NOT_EXIST, branchCode)) {
+			return;
+		}
+
+		// 商品定義ファイル読み込み処理
+		if(!readFile(args[0], FILE_NAME_COMMODITY_LST, productNames, productSales,
+			PRODUCT_FILE_NOT_EXIST, productCode)) {
 			return;
 		}
 
@@ -101,34 +124,49 @@ public class CalculateSales {
 					sales.add(line);
 				}
 
-				//売上ファイルの中身が2行でない場合エラー処理
-				if(sales.size() != 2) {
-					System.out.println(rcdFiles.get(i).getName() + NOT_TWO_LINES);
+				//売上ファイルの中身が3行でない場合エラー処理
+				if(sales.size() != 3) {
+					System.out.println(rcdFiles.get(i).getName() + NOT_THREE_LINES);
 					return;
 				}
 
 				//支店に該当がない場合エラー処理
 				if(!branchNames.containsKey(sales.get(0))) {
-					System.out.println(rcdFiles.get(i).getName() + INVALID_CODE);
+					System.out.println(rcdFiles.get(i).getName() + INVALID_BRANCHCODE);
+					return;
+				}
+
+				//商品に該当がない場合エラー処理
+				if(!productNames.containsKey(sales.get(1))) {
+					System.out.println(rcdFiles.get(i).getName() + INVALID_PRODUCTCODE);
 					return;
 				}
 
 				//売上ファイルの金額が数字でない場合エラー処理
-				if(!sales.get(1).matches("^[0-9]*$")) {
+				if(!sales.get(2).matches("^[0-9]*$")) {
 					System.out.println(UNKNOWN_ERROR);
 					return;
 				}
 
-				long fileSale = Long.parseLong(sales.get(1));
+				long fileSale = Long.parseLong(sales.get(2));
 
-				Long saleAmount = branchSales.get(sales.get(0)) + fileSale;
-				//売上金額を加算した後、10桁を越えたらエラー処理
-				if(saleAmount >= 10000000000L) {
-					System.out.println(OVER_TEN_DIGIT);
+				Long branchSaleAmount = branchSales.get(sales.get(0)) + fileSale;
+				//支店Mapに売上金額を加算した後、10桁を越えたらエラー処理
+				if(branchSaleAmount >= 10000000000L) {
+					System.out.println(sales.get(0) + OVER_TEN_DIGIT);
 					return;
 				}
 
-				branchSales.put(sales.get(0), saleAmount);
+				Long productSaleAmount = productSales.get(sales.get(1)) + fileSale;
+				//商品Mapに売上金額を加算した後、10桁を越えたらエラー処理
+				if(productSaleAmount >= 10000000000L) {
+					System.out.println(sales.get(1) + OVER_TEN_DIGIT);
+					return;
+				}
+
+				branchSales.put(sales.get(0), branchSaleAmount);
+
+				productSales.put(sales.get(1), productSaleAmount);
 
 			} catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
@@ -153,6 +191,11 @@ public class CalculateSales {
 			return;
 		}
 
+		// 商品別集計ファイル書き込み処理
+		if(!writeFile(args[0], FILE_NAME_COMMODITY_OUT, productNames, productSales)) {
+			return;
+		}
+
 	}
 
 	/**
@@ -165,16 +208,17 @@ public class CalculateSales {
 	 * @return 読み込み可否
 	 */
 	private static boolean readFile
-	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales,
+	 String fileExistsErr, String code) {
 
 
 		BufferedReader br = null;
 
 		try {
 			File file = new File(path, fileName);
-			//branch.lstが該当パスに存在しない場合エラー処理
+			//branch.lst(commodity.lst)が該当パスに存在しない場合エラー処理
 			if(!file.exists()) {
-				System.out.println(FILE_NOT_EXIST);
+				System.out.println(fileExistsErr);
 				return false;
 			}
 			FileReader fr = new FileReader(file);
@@ -185,15 +229,15 @@ public class CalculateSales {
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
 
-				//行を","で区切る→items[0]には,までの支店コード、items[1]には,より後ろの支店名が格納
+				//行を","で区切る→items[0]には,までの支店(商品)コード、items[1]には,より後ろの支店(商品)名が格納
 				String[] items = line.split(",");
-				//支店定義ファイルのフォーマットが不正な場合エラー処理
-				if(items.length != 2 || !items[0].matches("^[0-9]{3}")) {
-					System.out.println(FILE_INVALID_FORMAT);
+				//支店(商品)定義ファイルのフォーマットが不正な場合エラー処理
+				if(items.length != 2 || !items[0].matches(code)) {
+					System.out.println(fileName + FILE_INVALID_FORMAT);
 					return false;
 				}
 
-				//items[0]:支店コード　items[1]:支店名　0L:Long型の売上金額の初期値0
+				//items[0]:支店(商品)コード　items[1]:支店(商品)名　0L:Long型の売上金額の初期値0
 				branchNames.put(items[0], items[1]);
 				branchSales.put(items[0], 0L);
 			}
@@ -229,6 +273,7 @@ public class CalculateSales {
 	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
 		BufferedWriter bw = null;
+
 			try {
 				//最初にファイルを作成　()内で作成するファイルのパス、名称を定義
 				File writefile = new File(path, fileName);

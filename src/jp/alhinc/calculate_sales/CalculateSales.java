@@ -26,11 +26,12 @@ public class CalculateSales {
 
 	// エラーメッセージ
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
-	private static final String BRANCH_FILE_NOT_EXIST = "支店定義ファイルが存在しません";
-	private static final String PRODUCT_FILE_NOT_EXIST = "商品定義ファイルが存在しません";
+	private static final String BRANCH_FILE = "支店定義ファイル";
+	private static final String PRODUCT_FILE = "商品定義ファイル";
+	private static final String FILE_NOT_EXIST = "が存在しません";
 	private static final String FILE_INVALID_FORMAT = "のフォーマットが不正です";
 	private static final String FILE_NOT_SERIALNUMBER = "売上ファイル名が連番になっていません";
-	private static final String OVER_TEN_DIGIT = "の合計金額が10桁を超えました";
+	private static final String OVER_TEN_DIGIT = "合計金額が10桁を超えました";
 	private static final String INVALID_BRANCHCODE = "の支店コードが不正です";
 	private static final String INVALID_PRODUCTCODE = "の商品コードが不正です";
 	private static final String NOT_THREE_LINES = "のフォーマットが不正です";
@@ -61,16 +62,15 @@ public class CalculateSales {
 		// 商品コードの正規表現
 		String productCode = "^[a-zA-Z0-9]{8}";
 
-
 		// 支店定義ファイル読み込み処理
 		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales,
-			BRANCH_FILE_NOT_EXIST, branchCode)) {
+			BRANCH_FILE, branchCode)) {
 			return;
 		}
 
 		// 商品定義ファイル読み込み処理
 		if(!readFile(args[0], FILE_NAME_COMMODITY_LST, productNames, productSales,
-			PRODUCT_FILE_NOT_EXIST, productCode)) {
+			PRODUCT_FILE, productCode)) {
 			return;
 		}
 
@@ -151,16 +151,11 @@ public class CalculateSales {
 				long fileSale = Long.parseLong(sales.get(2));
 
 				Long branchSaleAmount = branchSales.get(sales.get(0)) + fileSale;
-				//支店Mapに売上金額を加算した後、10桁を越えたらエラー処理
-				if(branchSaleAmount >= 10000000000L) {
-					System.out.println(sales.get(0) + OVER_TEN_DIGIT);
-					return;
-				}
 
 				Long productSaleAmount = productSales.get(sales.get(1)) + fileSale;
-				//商品Mapに売上金額を加算した後、10桁を越えたらエラー処理
-				if(productSaleAmount >= 10000000000L) {
-					System.out.println(sales.get(1) + OVER_TEN_DIGIT);
+				//売上金額を加算した後、支店Mapまたは商品Mapの合計金額が10桁を越えたらエラー処理
+				if(branchSaleAmount >= 10000000000L || productSaleAmount >= 10000000000L) {
+					System.out.println(OVER_TEN_DIGIT);
 					return;
 				}
 
@@ -183,7 +178,6 @@ public class CalculateSales {
 					}
 				}
 			}
-
 		}
 
 		// 支店別集計ファイル書き込み処理
@@ -209,8 +203,7 @@ public class CalculateSales {
 	 */
 	private static boolean readFile
 	(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales,
-	 String fileExistsErr, String code) {
-
+	 String fileTypes, String code) {
 
 		BufferedReader br = null;
 
@@ -218,7 +211,7 @@ public class CalculateSales {
 			File file = new File(path, fileName);
 			//branch.lst(commodity.lst)が該当パスに存在しない場合エラー処理
 			if(!file.exists()) {
-				System.out.println(fileExistsErr);
+				System.out.println(fileTypes + FILE_NOT_EXIST);
 				return false;
 			}
 			FileReader fr = new FileReader(file);
@@ -233,7 +226,7 @@ public class CalculateSales {
 				String[] items = line.split(",");
 				//支店(商品)定義ファイルのフォーマットが不正な場合エラー処理
 				if(items.length != 2 || !items[0].matches(code)) {
-					System.out.println(fileName + FILE_INVALID_FORMAT);
+					System.out.println(fileTypes + FILE_INVALID_FORMAT);
 					return false;
 				}
 

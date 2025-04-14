@@ -143,7 +143,7 @@ public class CalculateSales {
 				}
 
 				//売上ファイルの金額が数字でない場合エラー処理
-				if(!sales.get(2).matches("^[0-9]*$")) {
+				if(!sales.get(2).matches("^[0-9]+$")) {
 					System.out.println(UNKNOWN_ERROR);
 					return;
 				}
